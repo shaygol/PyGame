@@ -22,7 +22,7 @@ pygame.display.set_caption('Shay\'s Snake')
 
 # constants
 KEYBOARD_PRESSED = pygame.KEYDOWN
-GAME_SPEED_START = 35
+GAME_SPEED_START = 60
 SCREEN_WIDTH = 600
 SCREEN_HEIGHT = 600
 SCREEN_COLOR = colors.SEAGREEN4
