@@ -18,7 +18,7 @@ env_var['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'  # for hiding an annoying message fr
 import pygame
 
 pygame.init()
-pygame.display.set_caption('Shay\'s Snake')
+pygame.display.set_caption('Shay\'s Pong')
 
 # constants
 KEYBOARD_PRESSED = pygame.KEYDOWN
@@ -26,84 +26,73 @@ GAME_SPEED_START = 60
 SCREEN_WIDTH = 600
 SCREEN_HEIGHT = 600
 SCREEN_COLOR = colors.SEAGREEN4
-SNAKE_SIZE = SCREEN_HEIGHT // 100
-STEP_LENGTH = SNAKE_SIZE
-SNAKE_COLOR = colors.YELLOW1
+PEDAL_1_LENGTH = SCREEN_HEIGHT // 4
+PEDAL_1_WIDTH = SCREEN_WIDTH // 100
+STEP_LENGTH = PEDAL_1_LENGTH
+PEDAL_1_COLOR = colors.BLACK
+BALL_COLOR = colors.BLACK
+BALL_SIZE = 2 * PEDAL_1_LENGTH
 
 # global variables
 game_screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
-food_size = 2 * SNAKE_SIZE
-food_color = colors.BANANA
 game_over = None
 game_speed = None
-snake_dir = None
+pedal_1_dir = None
 head_pos_x = None
 head_pos_y = None
-snake_pos_lst = None
+pedal_1_pos_lst = None
 is_space = None
-pos_food_x = SCREEN_HEIGHT // 2
-pos_food_y = SCREEN_WIDTH // 2
+pos_ball_x = SCREEN_HEIGHT // 2
+pos_ball_y = SCREEN_WIDTH // 2
 score = None
 
 
-def draw_food(rand_new=False):
-    global pos_food_x
-    global pos_food_y
-    global food_color
-    global food_size
+def draw_ball(rand_new=False):
+    global pos_ball_x
+    global pos_ball_y
+    global BALL_COLOR
+    global BALL_SIZE
 
     if rand_new:
-        pos_food_x = random.randint(10, SCREEN_WIDTH - 5)
-        pos_food_x -= pos_food_x % SNAKE_SIZE
-        pos_food_y = random.randint(10, SCREEN_HEIGHT - 5)
-        pos_food_y -= pos_food_y % SNAKE_SIZE
+        pos_ball_x = random.randint(10, SCREEN_WIDTH - 5)
+        pos_ball_x -= pos_ball_x % PEDAL_1_LENGTH
+        pos_ball_y = random.randint(10, SCREEN_HEIGHT - 5)
+        pos_ball_y -= pos_ball_y % PEDAL_1_LENGTH
         while True:
             colo = colors.get_rand_color()
-            food_color = colo[0]
-            food_color_name = colo[1]
-            if (food_color != SCREEN_COLOR) and ('green' not in food_color_name):
+            ball_color = colo[0]
+            ball_color_name = colo[1]
+            if (ball_color != SCREEN_COLOR) and ('green' not in ball_color_name):
                 break
 
+        ball_size_factor = 2 * random.random() + 1
+        BALL_SIZE = int(ball_size_factor * PEDAL_1_LENGTH)
+        print(f'ball: ({pos_ball_x}, {pos_ball_y}), Size - {BALL_SIZE}, Color - {colo[1]}')
 
-        food_size_factor = 2 * random.random() + 1
-        food_size = int(food_size_factor * SNAKE_SIZE)
-        print(f'Food: ({pos_food_x}, {pos_food_y}), Size - {food_size}, Color - {colo[1]}')
-
-    if food_size % 3 == 0:
-        pygame.draw.rect(game_screen, food_color, [pos_food_x, pos_food_y, food_size, food_size])
-    elif food_size % 3 == 1:
-        pygame.draw.circle(game_screen, food_color, center=(pos_food_x, pos_food_y), radius=food_size)
-    else:
-        pygame.draw.polygon(game_screen, food_color, ((pos_food_x - food_size, pos_food_y),
-                                                      (pos_food_x, pos_food_y - food_size),
-                                                      (pos_food_x + food_size, pos_food_y),
-                                                      (pos_food_x, pos_food_y + food_size)))
+        pygame.draw.circle(game_screen, ball_color, center=(pos_ball_x, pos_ball_y), radius=BALL_SIZE)
 
 
 def init_game():
     global game_over
     global game_speed
-    global snake_dir
-    global head_pos_x
-    global head_pos_x
+    global pedal_1_dir
     global head_pos_y
     global head_pos_y
-    global snake_pos_lst
+    global pedal_1_pos_lst
     global game_screen
     global is_space
     global score
 
     game_over = False
     game_speed = GAME_SPEED_START
-    snake_dir = ''
-    head_pos_x = random.randint(SCREEN_WIDTH // 2 - SCREEN_WIDTH // 4, SCREEN_WIDTH // 2 + SCREEN_WIDTH // 4)
-    head_pos_x -= (head_pos_x % SNAKE_SIZE)
+    pedal_1_dir = ''
+    head_pos_x = 0
     head_pos_y = random.randint(SCREEN_HEIGHT // 2 - SCREEN_HEIGHT // 4, SCREEN_HEIGHT // 2 + SCREEN_HEIGHT // 4)
-    head_pos_y -= (head_pos_y % SNAKE_SIZE)
-    snake_pos_lst = [(head_pos_x, head_pos_y)]  # list of tuples
+    head_pos_y -= (head_pos_y % PEDAL_1_LENGTH)
+    pedal_1_pos_lst = [(head_pos_x, head_pos_y)]  # list of tuples
     is_space = True
     score = 0
-    draw_food(True)
+    draw_ball(True)
 
 
 def finish_game():
@@ -139,53 +128,45 @@ def draw_score():
     game_screen.blit(text, textRect)
 
 
-def draw_snake():
-    global snake_pos_lst
+def draw_pedals():
+    global pedal_1_pos_lst
 
-    for pos_tpl in snake_pos_lst:
-        pygame.draw.circle(game_screen, color=SNAKE_COLOR, center=tuple(pos_tpl), radius=SNAKE_SIZE)
-
+    for pos_tpl in pedal_1_pos_lst:
+        #pygame.draw.circle(game_screen, color=PEDAL_1_COLOR, center=tuple(pos_tpl), radius=PEDAL_1_LENGTH)
+        pygame.draw.rect(game_screen, ball_color, [pos_ball_x, pos_ball_y, BALL_SIZE, BALL_SIZE])
 
 def game_action(key: pygame.key):
     global head_pos_x
     global head_pos_y
-    global snake_dir
-    global snake_pos_lst
+    global pedal_1_dir
+    global pedal_1_pos_lst
     global is_space
     global game_speed
     global score
-    tail = snake_pos_lst[0]
+    tail = pedal_1_pos_lst[0]
 
-    if (key == pygame.K_DOWN) and (snake_dir != 'up'):
-        snake_dir = 'down'
-    elif (key == pygame.K_UP) and (snake_dir != 'down'):
-        snake_dir = 'up'
-    if (key == pygame.K_RIGHT) and (snake_dir != 'left'):
-        snake_dir = 'right'
-    elif (key == pygame.K_LEFT) and (snake_dir != 'right'):
-        snake_dir = 'left'
+    if (key == pygame.K_DOWN) and (pedal_1_dir != 'up'):
+        pedal_1_dir = 'down'
+    elif (key == pygame.K_UP) and (pedal_1_dir != 'down'):
+        pedal_1_dir = 'up'
     elif key == pygame.K_s:
         is_space ^= 1
     elif key == pygame.K_n:
         init_game()
     elif key == pygame.K_p:
-        snake_dir = ''
+        pedal_1_dir = ''
 
-    if snake_dir == 'down':
+    if pedal_1_dir == 'down':
         head_pos_y += STEP_LENGTH
-    elif snake_dir == 'up':
+    elif pedal_1_dir == 'up':
         head_pos_y -= STEP_LENGTH
-    elif snake_dir == 'right':
-        head_pos_x += STEP_LENGTH
-    elif snake_dir == 'left':
-        head_pos_x -= STEP_LENGTH
     else:
         # pause game
         return
 
-    for (pox, poy) in snake_pos_lst:
+    for (pox, poy) in pedal_1_pos_lst:
         # check if the head hits part of the body
-        if (pox, poy) == (head_pos_x, head_pos_y) and len(snake_pos_lst) > 1:
+        if (pox, poy) == (head_pos_x, head_pos_y) and len(pedal_1_pos_lst) > 1:
             finish_game()
             return
 
@@ -194,14 +175,14 @@ def game_action(key: pygame.key):
             finish_game()
             return
 
-    snake_pos_lst.append((head_pos_x, head_pos_y))
+    pedal_1_pos_lst.append((head_pos_x, head_pos_y))
     if is_space:
-        tail = snake_pos_lst.pop(0)
+        tail = pedal_1_pos_lst.pop(0)
 
-    if (abs(head_pos_x - pos_food_x) <= SNAKE_SIZE) and (abs(head_pos_y - pos_food_y) <= SNAKE_SIZE):
+    if (abs(head_pos_x - pos_ball_x) <= PEDAL_1_LENGTH) and (abs(head_pos_y - pos_ball_y) <= PEDAL_1_LENGTH):
         print(f'Head: ({head_pos_x}, {head_pos_y})\n')
-        draw_food(True)
-        snake_pos_lst.insert(0, tail)
+        draw_ball(True)
+        pedal_1_pos_lst.insert(0, tail)
         game_speed += 2
         score += 1
 
@@ -212,14 +193,14 @@ def play_game():
     global head_pos_x
     global head_pos_y
     global game_speed
-    draw_food(True)
+    draw_ball(True)
     key = None
 
     while not game_over:
         game_screen.fill(SCREEN_COLOR)
         game_action(key)
-        draw_snake()
-        draw_food()
+        draw_pedals()
+        draw_ball()
         draw_score()
         pygame.display.update()
         pygame.time.Clock().tick(game_speed)
@@ -242,8 +223,8 @@ if __name__ == '__main__':
     except Exception as e:
         if tk_flag:
             msg = tkinter.Tk()
-            msg.title('Snake Cather )-;')
+            msg.title('Pong Cather )-;')
             msg.geometry('300x1')
-            tkinter.messagebox.showwarning('Snake Cather )-;', f'Unfortunately, the game has closed ({e})', parent=msg)
+            tkinter.messagebox.showwarning('Pong Cather )-;', f'Unfortunately, the game has closed ({e})', parent=msg)
         else:
-            print(f'Snake Cather - Unfortunately, the game has closed ({e})')
+            print(f'Pong Cather - Unfortunately, the game has closed ({e})')
