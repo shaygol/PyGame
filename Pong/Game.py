@@ -22,16 +22,19 @@ pygame.display.set_caption('Shay\'s Pong')
 
 # constants
 KEYBOARD_PRESSED = pygame.KEYDOWN
-GAME_SPEED_START = 60
-SCREEN_WIDTH = 600
+GAME_SPEED_START = 20
+SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
 SCREEN_COLOR = colors.SEAGREEN4
 PEDAL_1_LENGTH = SCREEN_HEIGHT // 4
 PEDAL_1_WIDTH = SCREEN_WIDTH // 100
-STEP_LENGTH = PEDAL_1_LENGTH
 PEDAL_1_COLOR = colors.BLACK
+PEDAL_2_LENGTH = PEDAL_1_LENGTH
+PEDAL_2_WIDTH = PEDAL_1_WIDTH
+PEDAL_2_COLOR = colors.BLACK
 BALL_COLOR = colors.BLACK
-BALL_SIZE = 2 * PEDAL_1_LENGTH
+BALL_SIZE = PEDAL_1_WIDTH
+STEP_LENGTH = 10
 
 # global variables
 game_screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
@@ -40,8 +43,7 @@ game_speed = None
 pedal_1_dir = None
 head_pos_x = None
 head_pos_y = None
-pedal_1_pos_lst = None
-is_space = None
+pedal_1_pos_lst = []
 pos_ball_x = SCREEN_HEIGHT // 2
 pos_ball_y = SCREEN_WIDTH // 2
 score = None
@@ -50,26 +52,14 @@ score = None
 def draw_ball(rand_new=False):
     global pos_ball_x
     global pos_ball_y
-    global BALL_COLOR
-    global BALL_SIZE
 
     if rand_new:
         pos_ball_x = random.randint(10, SCREEN_WIDTH - 5)
         pos_ball_x -= pos_ball_x % PEDAL_1_LENGTH
         pos_ball_y = random.randint(10, SCREEN_HEIGHT - 5)
         pos_ball_y -= pos_ball_y % PEDAL_1_LENGTH
-        while True:
-            colo = colors.get_rand_color()
-            ball_color = colo[0]
-            ball_color_name = colo[1]
-            if (ball_color != SCREEN_COLOR) and ('green' not in ball_color_name):
-                break
 
-        ball_size_factor = 2 * random.random() + 1
-        BALL_SIZE = int(ball_size_factor * PEDAL_1_LENGTH)
-        print(f'ball: ({pos_ball_x}, {pos_ball_y}), Size - {BALL_SIZE}, Color - {colo[1]}')
-
-        pygame.draw.circle(game_screen, ball_color, center=(pos_ball_x, pos_ball_y), radius=BALL_SIZE)
+    pygame.draw.circle(game_screen, BALL_COLOR, center=(pos_ball_x, pos_ball_y), radius=BALL_SIZE)
 
 
 def init_game():
@@ -77,10 +67,9 @@ def init_game():
     global game_speed
     global pedal_1_dir
     global head_pos_y
-    global head_pos_y
+    global head_pos_x
     global pedal_1_pos_lst
     global game_screen
-    global is_space
     global score
 
     game_over = False
@@ -89,10 +78,9 @@ def init_game():
     head_pos_x = 0
     head_pos_y = random.randint(SCREEN_HEIGHT // 2 - SCREEN_HEIGHT // 4, SCREEN_HEIGHT // 2 + SCREEN_HEIGHT // 4)
     head_pos_y -= (head_pos_y % PEDAL_1_LENGTH)
-    pedal_1_pos_lst = [(head_pos_x, head_pos_y)]  # list of tuples
-    is_space = True
+    pedal_1_pos_lst.append((head_pos_x, head_pos_y))
     score = 0
-    draw_ball(True)
+    draw_ball()
 
 
 def finish_game():
@@ -130,27 +118,27 @@ def draw_score():
 
 def draw_pedals():
     global pedal_1_pos_lst
+    global BALL_COLOR
 
     for pos_tpl in pedal_1_pos_lst:
-        #pygame.draw.circle(game_screen, color=PEDAL_1_COLOR, center=tuple(pos_tpl), radius=PEDAL_1_LENGTH)
-        pygame.draw.rect(game_screen, ball_color, [pos_ball_x, pos_ball_y, BALL_SIZE, BALL_SIZE])
+        pygame.draw.rect(game_screen, PEDAL_1_COLOR, [pos_tpl[0], pos_tpl[1], PEDAL_1_WIDTH, PEDAL_1_LENGTH])
+    # for pos_tpl in pedal_2_pos_lst:
+        pygame.draw.rect(game_screen, PEDAL_2_COLOR, [SCREEN_WIDTH - PEDAL_2_WIDTH, pos_ball_y, PEDAL_2_WIDTH, PEDAL_2_LENGTH])
+
 
 def game_action(key: pygame.key):
     global head_pos_x
     global head_pos_y
     global pedal_1_dir
     global pedal_1_pos_lst
-    global is_space
     global game_speed
     global score
     tail = pedal_1_pos_lst[0]
 
-    if (key == pygame.K_DOWN) and (pedal_1_dir != 'up'):
+    if key == pygame.K_DOWN:
         pedal_1_dir = 'down'
-    elif (key == pygame.K_UP) and (pedal_1_dir != 'down'):
+    elif key == pygame.K_UP:
         pedal_1_dir = 'up'
-    elif key == pygame.K_s:
-        is_space ^= 1
     elif key == pygame.K_n:
         init_game()
     elif key == pygame.K_p:
@@ -164,27 +152,8 @@ def game_action(key: pygame.key):
         # pause game
         return
 
-    for (pox, poy) in pedal_1_pos_lst:
-        # check if the head hits part of the body
-        if (pox, poy) == (head_pos_x, head_pos_y) and len(pedal_1_pos_lst) > 1:
-            finish_game()
-            return
-
-        # check if the head hits the screen edges
-        if (pox >= SCREEN_WIDTH) or (pox <= 0) or (poy >= SCREEN_HEIGHT) or (poy <= 0):
-            finish_game()
-            return
-
     pedal_1_pos_lst.append((head_pos_x, head_pos_y))
-    if is_space:
-        tail = pedal_1_pos_lst.pop(0)
-
-    if (abs(head_pos_x - pos_ball_x) <= PEDAL_1_LENGTH) and (abs(head_pos_y - pos_ball_y) <= PEDAL_1_LENGTH):
-        print(f'Head: ({head_pos_x}, {head_pos_y})\n')
-        draw_ball(True)
-        pedal_1_pos_lst.insert(0, tail)
-        game_speed += 2
-        score += 1
+    tail = pedal_1_pos_lst.pop(0)
 
 
 def play_game():
@@ -193,7 +162,7 @@ def play_game():
     global head_pos_x
     global head_pos_y
     global game_speed
-    draw_ball(True)
+    draw_ball()
     key = None
 
     while not game_over:
